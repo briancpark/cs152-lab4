@@ -30,20 +30,24 @@ imax:
 imax_loop:
     vsetvli t0, a0, e32, m8     # configure SEW=32 LMUL=8
 
-    # TODO: load x[k] vector
-    # TODO: find maximum value in vector
-    # TODO: compare against global maximum
+    vle32.v v0, (a1)            # load x[k] vector
+    vredmax.vs v16, v0, v24     # find maximum value in vector
+    vfmv.f.s ft1, v16           # compare against global maximum
+    flt.s t3, ft1, ft0
+    bnez t3, skip
 
-    # TODO: locate position of maximum element; compute new index
-    # TODO: update index as necessary
-    # TODO: update maximum as necessary
-
+    vmfge.vf v8, v0, ft1        # locate position of maximum element; compute new index
+    vfirst.m t1, v8
+    add t3, t1, t2              # update index as necessary
+    sub t1, t3, a0
+    vfmv.f.s ft0, v16           # update maximum as necessary
+skip:
     sub a0, a0, t0              # decrement n
     slli t0, t0, 2              # scale VL to byte offset
     add a1, a1, t0              # bump pointer x
     bnez a0, imax_loop          # loop
 
-    # TODO: set return value
+    mv a0, t1                   # set return value
 
     ret
 
