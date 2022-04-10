@@ -42,9 +42,9 @@ dgemv_loop_i:
 
 dgemv_loop_j:
 
-    # TODO: load A[i][j]
-    # TODO: load x[j]
-    # TODO: accumulate A[i][j] * x[j] into v0
+    vle64.v v8, (a2)            # load A[i][j]
+    vle64.v v16, (t2)           # load x[j]
+    vfmacc.vv v0, v8, v16       # accumulate A[i][j] * x[j] into v0
 
     sub t1, t1, t0              # decrement counter
     slli t0, t0, 3              # scale VL to byte offset
@@ -55,7 +55,9 @@ dgemv_loop_j:
 
     vsetvli zero, a1, e64, m8   # restore original VL
 
-    # TODO: perform final reduction on v0
+    vfmv.s.f v24, ft0           # perform final reduction on v0
+    vfredsum.vs v24, v0, v24
+    vfmv.f.s ft1, v24
 
     fsd ft1, (a4)               # store y[i]
     addi a4, a4, 8              # bump pointer y
