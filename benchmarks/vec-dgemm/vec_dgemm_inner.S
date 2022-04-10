@@ -66,11 +66,10 @@ dgemm_inner_loop_j:
     add a5, a4, t1                  # compute pointer to C[i+2][j]
     add a6, a5, t1                  # compute pointer to C[i+3][j]
 
-    # HINT: treat C[][] as vectors
-    # TODO: load C[i][j]
-    # TODO: load C[i+1][j]
-    # TODO: load C[i+2][j]
-    # TODO: load C[i+3][j]
+    vle64.v v0, (a3)                # load C[i][j]
+    vle64.v v4, (a4)                # load C[i+1][j]
+    vle64.v v8, (a5)                # load C[i+2][j]
+    vle64.v v12, (a6)               # load C[i+3][j]
 
     mv t4, a1                       # copy temporary pointer to A
     mv t5, a2                       # copy temporary pointer to B
@@ -78,43 +77,53 @@ dgemm_inner_loop_j:
     bgeu a1, t3, 1f                 # skip if (n / 4) == 0
 
 dgemm_inner_loop_k:
-    # HINT: treat B[][] as vectors
-    # TODO: load B[k][j]
+    vle64.v v16, (t5)               # load B[k][j]
     add t5, t5, t1                  # bump pointer B by row stride
-    # TODO: load B[k+1][j]
+    vle64.v v20, (t5)               # load B[k+1][j]
     add t5, t5, t1                  # bump pointer B by row stride
-    # TODO: load B[k+2][j]
+    vle64.v v24, (t5)               # load B[k+2][j]
     add t5, t5, t1                  # bump pointer B by row stride
-    # TODO: load B[k+3][j]
+    vle64.v v28, (t5)               # load B[k+3][j]
 
-    # HINT: treat A[][] as scalars
     fld ft0, (t4)                   # load A[i][k]
     fld ft1, 8(t4)                  # load A[i][k+1]
     fld ft2, 16(t4)                 # load A[i][k+2]
     fld ft3, 24(t4)                 # load A[i][k+3]
     add t6, t4, t1                  # bump pointer A by row stride
 
-    # TODO: load A[i+1][k]
-    # TODO: load A[i+1][k+1]
-    # TODO: load A[i+1][k+2]
-    # TODO: load A[i+1][k+3]
+    fld ft4, (t6)                   # load A[i+1][k]
+    fld ft5, 8(t6)                  # load A[i+1][k+1]
+    fld ft6, 16(t6)                 # load A[i+1][k+2]
+    fld ft7, 24(t6)                 # load A[i+1][k+3]
     add t6, t6, t1
 
-    # TODO: load A[i+2][k]
-    # TODO: load A[i+2][k+1]
-    # TODO: load A[i+2][k+2]
-    # TODO: load A[i+2][k+3]
+    fld ft8, (t6)                   # load A[i+2][k]
+    fld ft9, 8(t6)                  # load A[i+2][k+1]
+    fld ft10, 16(t6)                # load A[i+2][k+2]
+    fld ft11, 24(t6)                # load A[i+2][k+3]
     add t6, t6, t1
 
-    # TODO: load A[i+3][k]
-    # TODO: load A[i+3][k+1]
-    # TODO: load A[i+3][k+2]
-    # TODO: load A[i+3][k+3]
+    fld fa0, (t6)                   # load A[i+3][k]
+    fld fa1, 8(t6)                  # load A[i+3][k+1]
+    fld fa2, 16(t6)                 # load A[i+3][k+2]
+    fld fa3, 24(t6)                 # load A[i+3][k+3]
 
-    # TODO: compute partial C[i][j] unrolled 4 times
-    # TODO: compute partial C[i+1][j] unrolled 4 times
-    # TODO: compute partial C[i+2][j] unrolled 4 times
-    # TODO: compute partial C[i+3][j] unrolled 4 times
+    vfmacc.vf v0, ft0, v16
+    vfmacc.vf v0, ft1, v20
+    vfmacc.vf v0, ft2, v24
+    vfmacc.vf v0, ft3, v28
+    vfmacc.vf v4, ft4, v16
+    vfmacc.vf v4, ft5, v20
+    vfmacc.vf v4, ft6, v24
+    vfmacc.vf v4, ft7, v28
+    vfmacc.vf v8, ft8, v16
+    vfmacc.vf v8, ft9, v20
+    vfmacc.vf v8, ft10, v24
+    vfmacc.vf v8, ft11, v28
+    vfmacc.vf v12, fa0, v16
+    vfmacc.vf v12, fa1, v20
+    vfmacc.vf v12, fa2, v24
+    vfmacc.vf v12, fa3, v28
 
     addi t4, t4, 8*4                # bump pointer A by 4*sizeof(double)
     add t5, t5, t1                  # bump pointer B by row stride
@@ -124,30 +133,30 @@ dgemm_inner_loop_k:
     beq t3, t2, 2f                  # skip if (n % 4) == 0
 
 dgemm_inner_loop_k_tail:
-    # TODO: load B[k][j]
+    vle64.v v16, (t5)               # load B[k][j]
 
-    # TODO: load A[i][k]
+    fld ft0, (t4)                   # load A[i][k]
     add t6, t4, t1
-    # TODO: load A[i+1][k]
+    fld ft1, (t6)                   # load A[i+1][k]
     add t6, t6, t1
-    # TODO: load A[i+2][k]
+    fld ft2, (t6)                   # load A[i+2][k]
     add t6, t6, t1
-    # TODO: load A[i+3][k]
+    fld ft3, (t6)                   # load A[i+3][k]
 
-    # TODO: compute partial C[i][j] for remainder
-    # TODO: compute partial C[i+1][j] for remainder
-    # TODO: compute partial C[i+2][j] for remainder
-    # TODO: compute partial C[i+3][j] for remainder
+    vfmacc.vf v0, ft0, v16          # compute partial C[i][j] for remainder
+    vfmacc.vf v4, ft1, v16          # compute partial C[i+1][j] for remainder
+    vfmacc.vf v8, ft2, v16          # compute partial C[i+2][j] for remainder
+    vfmacc.vf v12, ft3, v16         # compute partial C[i+3][j] for remainder
 
     addi t4, t4, 8                  # bump pointer A by sizeof(double)
     add t5, t5, t1                  # bump pointer B by row stride
     bltu t4, t2, dgemm_inner_loop_k_tail
 
 2:
-    # TODO: store C[i][j]
-    # TODO: store C[i+1][j]
-    # TODO: store C[i+1][j]
-    # TODO: store C[i+1][j]
+    vse64.v v0, (a3)                # store C[i][j]
+    vse64.v v4, (a4)                # store C[i+1][j]
+    vse64.v v8, (a5)                # store C[i+1][j]
+    vse64.v v12, (a6)               # store C[i+1][j]
 
     add a2, a2, t0                  # bump pointer B by VL
     add a3, a3, t0                  # bump pointer C by VL
